@@ -59,14 +59,27 @@ def bootstrap() -> dict:
         docs = db.scalar(select(func.count(Document.id))) or 0
         chunks = db.scalar(select(func.count(Chunk.id))) or 0
         if docs == 0:
-            from app.seed_data import refresh_all
+            from app.cli import (
+                create_admin,
+                ingest_pages,
+                seed_admissions,
+                seed_institutions_and_programs,
+                seed_sources,
+            )
+            from app.config import settings
 
             try:
-                refresh_all(db)
-                docs = db.scalar(select(func.count(Document.id))) or 0
-                chunks = db.scalar(select(func.count(Chunk.id))) or 0
+                sources = seed_sources(db)
+                seed_admissions(db, sources)
+                ingest_pages(db, sources, sources)
+                seed_institutions_and_programs(db, sources, offline=True)
+                if settings.admin_seed_password != "change-me-in-production":
+                    create_admin(db, settings.admin_seed_email, settings.admin_seed_password)
+                db.commit()
             except Exception:
-                pass
+                db.rollback()
+            docs = db.scalar(select(func.count(Document.id))) or 0
+            chunks = db.scalar(select(func.count(Chunk.id))) or 0
         return {"documents": docs, "chunks": chunks}
     finally:
         db.close()
