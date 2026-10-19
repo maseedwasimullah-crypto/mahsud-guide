@@ -34,7 +34,7 @@ def clean_settings(monkeypatch):
 @pytest.mark.parametrize(
     ("provider", "key_field", "base_url", "model"),
     [
-        ("gemini", "gemini_api_key", "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.5-flash"),
+        ("gemini", "gemini_api_key", "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-3.5-flash-lite"),
         ("groq", "groq_api_key", "https://api.groq.com/openai/v1", "openai/gpt-oss-20b"),
         ("openrouter", "openrouter_api_key", "https://openrouter.ai/api/v1", "meta-llama/llama-3.2-3b-instruct:free"),
         ("openai", "openai_api_key", "https://api.openai.com/v1", "gpt-4o-mini"),

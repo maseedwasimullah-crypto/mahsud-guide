@@ -8,10 +8,23 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = BASE_DIR.parent
+
+# Settings are looked up in this order: real environment variables always win,
+# then the first .env that exists. Checking both the repo root and backend/ means
+# the API key is found whether uvicorn is started from backend/ or from the repo
+# root, and whether the Streamlit app is run from the root.
+ENV_FILES = (
+    Path(".env"),
+    REPO_ROOT / ".env",
+    BASE_DIR / ".env",
+)
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=ENV_FILES, env_file_encoding="utf-8", extra="ignore"
+    )
 
     app_name: str = "MAHSUDo-guide API"
     environment: str = "development"

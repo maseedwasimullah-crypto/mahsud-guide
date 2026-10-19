@@ -5,19 +5,44 @@ Peshawar admissions. FastAPI + SQLite backend, React + TypeScript frontend.
 
 ## Architecture
 
+Two interfaces share one backend, so they can be deployed independently:
+
 ```
-backend/
+backend/                 FastAPI app (the single source of truth)
   app/
-    api/            assistant (chat, /api/time), conversations, search, admin, auth
-    services/       agent (orchestration), retrieval (hybrid search), ingest, llm
-    utils/time.py   Asia/Karachi clock helpers (never hardcoded dates)
-    models.py       Conversation, ConversationMessage, Document, Chunk, User, ...
-  alembic/          migrations (conversations + conversation_messages)
-  tests/            pytest suite (63 tests)
-frontend/
-  src/pages/Assistant.tsx   chat UI: sidebar, message bubbles, citations
-  src/components/Clock.tsx  live Peshawar clock, synced to /api/time
+    api/                 assistant (chat, /api/time), conversations, search, admin, auth
+    services/            agent (orchestration), retrieval (hybrid search), ingest, llm
+    utils/time.py        Asia/Karachi clock helpers (never hardcoded dates)
+    models.py            Conversation, ConversationMessage, Document, Chunk, User, ...
+  alembic/               migrations (conversations + conversation_messages)
+  tests/                 pytest suite (63 tests)
+frontend/                React 19 + Vite SPA; calls the backend at "/api"
+streamlit_app.py         alternative single-file UI reusing backend services directly
+
+data/raw/                committed official-source archive used to seed the KB offline
+Dockerfile               container for the Streamlit interface
+Dockerfile.fullstack     container that builds the SPA and serves it + the API together
+render.yaml              Render Blueprint (both services)
 ```
+
+- **Full-stack (recommended)** — one process. `backend/app/main.py` mounts
+  `frontend/dist` at `/` when a production build exists, so the SPA and the API
+  share an origin and no CORS or API-base configuration is needed.
+- **Streamlit** — one process, no separate frontend build; reuses the same
+  agent, retrieval and clock code.
+
+### Which platform?
+
+| Platform | Best for | Notes |
+| --- | --- | --- |
+| **Render** (Blueprint) | Full-stack or Streamlit | `render.yaml` is ready; free tier sleeps when idle |
+| **Streamlit Community Cloud** | Streamlit UI only | simplest; Streamlit-only, ephemeral disk |
+| **Docker anywhere** (Fly, Railway, VPS) | Full control | use `Dockerfile.fullstack` |
+| **Local** | Development | see "Running" below |
+
+SQLite is used by default. On platforms with ephemeral disks (Render free,
+Streamlit Cloud) chat history resets on redeploy — set `DATABASE_URL` to a
+PostgreSQL instance for persistence.
 
 ## Conversational assistant
 
@@ -63,23 +88,39 @@ same OpenAI-compatible Chat Completions protocol, so no code changes are needed.
 
 | `LLM_PROVIDER`     | Endpoint (official)                                        | Default model                          | Key variable        |
 | ------------------ | ---------------------------------------------------------- | -------------------------------------- | ------------------- |
-| `gemini`           | `https://generativelanguage.googleapis.com/v1beta/openai`  | `gemini-2.5-flash`                     | `GEMINI_API_KEY`    |
+| `gemini`           | `https://generativelanguage.googleapis.com/v1beta/openai`  | `gemini-3.5-flash-lite`                | `GEMINI_API_KEY`    |
 | `groq`             | `https://api.groq.com/openai/v1`                           | `openai/gpt-oss-20b`                   | `GROQ_API_KEY`      |
 | `openrouter`       | `https://openrouter.ai/api/v1`                             | `meta-llama/llama-3.2-3b-instruct:free`| `OPENROUTER_API_KEY`|
 | `openai`           | `https://api.openai.com/v1` (or `LLM_BASE_URL`)            | `gpt-4o-mini`                          | `OPENAI_API_KEY`    |
 | `openai_compatible`| your `LLM_BASE_URL`                                        | your `LLM_MODEL`                       | `LLM_API_KEY`       |
 | `ollama`           | `OLLAMA_BASE_URL` (local)                                  | your `LLM_MODEL`                       | n/a                 |
 
-Recommendation for this project: start with **Google Gemini** (Gemini offers a
-free tier and an OpenAI-compatible endpoint; see
-<https://ai.google.dev/gemini-api/docs/openai>), or **Groq** for low latency.
-**Local Ollama is only practical with roughly 8 GB+ RAM and a GPU** — the
-reference deployment here has ~4 GB RAM, so hosted providers are recommended.
+### Google Gemini model choice
 
-To enable a provider:
+Gemini free-tier limits are per model, and Google currently restricts the 2.5
+family to accounts that already used it, so **new projects must use a 3.x model**
+(<https://ai.google.dev/gemini-api/docs/models>):
+
+| Model                  | Free tier (approx.)  | When to use                          |
+| ---------------------- | -------------------- | ------------------------------------ |
+| `gemini-3.5-flash-lite`| 500 req/day, 15 RPM  | Default — best quota for public use  |
+| `gemini-3.8-flash`     | ~20 req/day, 5 RPM   | Higher quality, easy to exhaust      |
+
+Set `LLM_MODEL` in `.env` to switch. Rate limits are per project, reset at
+midnight Pacific time, and are visible in Google AI Studio
+(<https://aistudio.google.com>).
+
+Recommendation for this project: start with **Google Gemini** (free tier plus an
+OpenAI-compatible endpoint; see <https://ai.google.dev/gemini-api/docs/openai>),
+or **Groq** for low latency. **Local Ollama is only practical with roughly 8 GB+
+RAM and a GPU** — the reference deployment here has ~4 GB RAM, so hosted
+providers are recommended.
+
+To enable a provider (settings are read from `.env` in the repo root **or**
+`backend/`; real environment variables always take precedence):
 
 ```
-# backend/.env
+# .env   (repo root)
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=your-key
 # LLM_MODEL=            # optional: omit to use the default model
@@ -105,22 +146,37 @@ on them):
 
 ## Running
 
-Backend (from `backend/`):
+### Backend (from `backend/`)
 
-```
-python -m venv .venv && .venv\Scripts\activate   # Windows
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env                           # set SECRET_KEY
-alembic upgrade head
-uvicorn app.main:app --reload
+python -m app.cli bootstrap --offline     # create DB + seed from data/raw (no network)
+python -m uvicorn app.main:app --reload --port 8010
 ```
 
-Frontend (from `frontend/`):
+API docs: <http://127.0.0.1:8010/docs> · health: <http://127.0.0.1:8010/api/health>
 
-```
+### Frontend (from `frontend/`)
+
+```powershell
 npm install
-npm run dev
+npm run dev      # http://127.0.0.1:5173 (proxies /api to the backend on 8010)
 ```
+
+The dev proxy target defaults to `http://127.0.0.1:8010`. Override it with
+`VITE_API_PROXY_TARGET` if the backend runs elsewhere (see `frontend/.env.example`).
+
+### Single-origin production (no separate frontend server)
+
+```powershell
+cd frontend; npm run build          # emits frontend/dist
+cd ..\backend; python -m uvicorn app.main:app --port 8010
+```
+
+The API detects `frontend/dist/index.html` and serves the SPA at `/`, so the
+whole app is reachable at <http://127.0.0.1:8010>.
 
 ## Streamlit interface
 
@@ -171,35 +227,49 @@ Notes:
 
 ### Deploying with Docker or Render
 
-The repo includes a `Dockerfile` (single container running the Streamlit app)
-and a `render.yaml` Blueprint:
+Two Dockerfiles are provided:
 
-```
-# Local container
+| File | Serves | Port | Health check |
+| --- | --- | --- | --- |
+| `Dockerfile.fullstack` | React SPA **+** FastAPI (recommended) | `8010` | `/api/health` |
+| `Dockerfile` | Streamlit assistant | `8501` | `/_stcore/health` |
+
+Both seed the knowledge base from the committed `data/raw/` archive at boot, so
+they work without outbound network access.
+
+```powershell
+# Full-stack image
+docker build -t mahsud-guide-full -f Dockerfile.fullstack .
+docker run -p 8010:8010 `
+  -e SECRET_KEY=change-me `
+  -e LLM_PROVIDER=gemini -e GEMINI_API_KEY=your-key `
+  mahsud-guide-full
+# -> http://localhost:8010
+
+# Streamlit image
 docker build -t mahsud-guide .
-docker run -p 8501:8501 \
-  -e LLM_PROVIDER=gemini -e GEMINI_API_KEY=your-key \
-  mahsud-guide
+docker run -p 8501:8501 -e LLM_PROVIDER=gemini -e GEMINI_API_KEY=your-key mahsud-guide
+# -> http://localhost:8501
 ```
 
-Render (one click / CLI):
+Render (Blueprint) — deploy both/one from `render.yaml`:
 
 1. Push this repo to GitHub.
-2. In the Render dashboard: **New → Blueprint**, pick this repo, and Render
-   reads `render.yaml`. It generates `SECRET_KEY` automatically and prompts for
-   the provider key.
-3. Or via CLI: `pip install render-cli && render login && render blueprint launch`.
+2. Render dashboard → **New → Blueprint** → pick this repo → **Apply**. Render
+   generates `SECRET_KEY` automatically and prompts for provider keys.
+3. CLI alternative: `pip install render-cli && render login && render blueprint launch`.
 
-The service serves on port `8501` and exposes Streamlit's health endpoint at
-`/_stcore/health`. Leave `LLM_PROVIDER=none` for extractive answers or set a
-provider + key for model-written answers.
+Delete the service you do not need from `render.yaml` (use the full-stack
+`mahsud-guide` for the React app, or `mahsud-guide-streamlit` for the Streamlit
+UI). Leave `LLM_PROVIDER=none` for extractive answers or set a provider + key
+for model-written answers.
 
 ## Testing
 
 ```
 cd backend && python -m pytest -q     # 63 tests: API, retrieval, timezone, conversations, LLM providers
-cd frontend && npx tsc --noEmit       # typecheck
-cd frontend && npx oxlint            # lint
+cd frontend && npm run build          # tsc typecheck + vite production build
+cd frontend && npm run lint           # oxlint
 ```
 
 Timezone tests use controlled UTC instants (including dates where the UTC
@@ -209,7 +279,31 @@ follow-up retrieval, cascade delete, and the no-provider extractive path.
 
 ## Configuration
 
-`.env.example` lists all variables. Sensitive values (SECRET_KEY,
-GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY / OPENAI_API_KEY / LLM_API_KEY,
-ADMIN_EMAIL, ADMIN_PASSWORD) stay in environment variables only and are never
-committed. Provider error messages returned to the client are redacted.
+Settings are read from real environment variables first, then from the first
+`.env` found in the repo root or `backend/`. `.env.example` lists every variable.
+
+### Required in production
+
+| Variable | Purpose |
+| --- | --- |
+| `SECRET_KEY` | Signs auth tokens. Generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`. |
+| `LLM_PROVIDER` | `none` (extractive) or `gemini` / `groq` / `openrouter` / `openai` / `openai_compatible` / `ollama`. |
+| provider key | `<PROVIDER>_API_KEY` or the generic `LLM_API_KEY` matching `LLM_PROVIDER`. |
+
+### Common optional
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | local SQLite | Use `postgresql+psycopg://…` for persistence on ephemeral hosts. |
+| `LLM_MODEL` | provider default | e.g. `gemini-3.5-flash-lite`, `gemini-3.8-flash`. |
+| `ALLOWED_ORIGINS` | localhost:5173 | Comma-separated CORS origins (needed only for a separately hosted frontend). |
+| `ENVIRONMENT` | `development` | Set `production` on live hosts. |
+| `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` | — | Used by `python -m app.cli create-admin`. |
+| `VITE_API_BASE_URL` | `/api` | Frontend build-time API origin when not served from the same host. |
+
+Frontend variables must be prefixed `VITE_` and are baked in at build time
+(`frontend/.env.example`).
+
+Never commit secrets: `.env`, `.streamlit/secrets.toml` and `*.key`/`*.pem` are
+git-ignored (see `.gitignore`). Provider error messages returned to the client
+are redacted.

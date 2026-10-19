@@ -43,7 +43,7 @@ PROVIDER_PRESETS: dict[str, ProviderPreset] = {
         "gemini",
         "Google Gemini",
         "https://generativelanguage.googleapis.com/v1beta/openai",
-        "gemini-2.5-flash",
+        "gemini-3.5-flash-lite",
         "GEMINI_API_KEY",
     ),
     "groq": ProviderPreset(

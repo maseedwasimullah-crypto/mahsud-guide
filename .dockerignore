@@ -18,6 +18,7 @@ __pycache__
 .env
 .env.*
 .streamlit/secrets.toml
+frontend/.env.local
 
 # Databases and generated artefacts
 *.db
@@ -29,7 +30,7 @@ data/ingested
 *.log
 logs
 
-# Frontend build output (the container serves the Streamlit app, not the SPA)
+# Frontend dependencies/output (rebuilt inside the image)
 node_modules
 frontend/node_modules
 frontend/dist
