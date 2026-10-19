@@ -1,0 +1,54 @@
+MANUAL CAPTURE — Higher Education Commission of Pakistan (HEC) home page
+Source URL: https://www.hec.gov.pk/
+Captured: 2026-10-19 (captured by hand during research; automated verification against
+the live page is still required before this text is treated as current).
+
+Page title: Welcome to HEC Pakistan
+Tagline: Empowering Pakistan through Higher Education
+
+Quick links published on the home page
+- Degree Attestation
+- Equivalence Certificate
+- Grievance Addressal
+- PM Laptop Scheme
+- Library & Utilities
+- Student Facilities
+
+Services & Facilities section
+- Degree Attestation
+- Equivalence Certificate
+- Grievance Addressal
+
+Initiatives & Research section
+- Research Programs
+- Initiative
+- Projects
+- Tenure Track
+- Quality Assurance
+
+Policies & Procedures section
+- Policies & Procedures
+- Disability policy
+- Tenure track
+- Plagiarism policy
+- Collaboration criteria
+
+Announcements section (text as published at capture time)
+"In continuation of its efforts to enable the country's higher education sector to become
+more effective in academic excellence, management and problem-oriented research, the HEC
+Pakistan Wednesday held launch conference of the NAHE."
+
+Explore section
+- About HEC
+- Events
+- News & Publications
+- Blog
+- Help
+- Contact Us
+
+Regulatory note recorded by MAHSUDo-guide:
+HEC is the national higher-education regulator. HEC recognition of a university/degree is
+distinct from programme-level professional accreditation (for example PNMC recognition of a
+nursing programme). HEC publishes degree attestation and equivalence services; students
+needing an equivalence certificate (for example for foreign qualifications) should consult
+HEC's official Equivalence Certificate service.

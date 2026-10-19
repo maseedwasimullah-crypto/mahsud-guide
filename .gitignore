@@ -1,0 +1,40 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment files and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Local databases
+*.db
+*.sqlite3
+*.sqlite
+backend/mahsud.db
+
+# Generated / uploaded artefacts
+data/uploads/
+data/ingested/
+*.log
+logs/
+
+# OS / editor noise
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+.vscode/

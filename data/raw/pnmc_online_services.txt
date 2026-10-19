@@ -1,0 +1,73 @@
+MANUAL CAPTURE — Pakistan Nursing & Midwifery Council (PNMC) online services
+Source URL: https://online.pnmc.gov.pk/
+Captured: 2026-10-19 (captured by hand during research; the host closes connections
+from automated clients, so this page is not fetched automatically by the ingestion job)
+
+Page title: Welcome! PNMC User
+
+PNMC's Online Services
+- Apply For a Licence Online
+- Renew a license Online
+- Apply For a Duplicate License
+- Online License Verification
+- Institute Pre Registration
+- Check Application Status
+- Track Nursing Professionals
+- Nursing Council Licensing Examination
+- Requirements and Procedure
+- Guides
+
+Statement on the page: "PNMC is digital. Avail all services online. Register, renew,
+verify, or apply — nurses, midwives, institutes, students, and the general public can do
+it all from one portal, without a single office visit."
+Registered professionals shown on the page at capture time: 201,767.
+
+For Nurses, Midwives & LHVs
+- New registration: apply as a nurse, midwife, LHV, or nursing assistant in five steps.
+- Renew your license online.
+- Request a duplicate card.
+- Local verification: confirm registration status for local employers and hospitals.
+- International verification: generate credentials recognised by overseas employers.
+- Track application status with CNIC and token number.
+
+For Institutes
+- Institute registration: submit an institute for PNMC recognition and track the review.
+- Student pre-registration: submit incoming students for pre-registration ahead of enrolment.
+- Pre-registration guideline.
+- Terms of reference governing institute pre-registration.
+
+For Students
+- Browse recognised institutes: search the official list before applying anywhere.
+- Diploma & degree programmes recognised by PNMC.
+- Admission criteria: eligibility requirements before starting an application.
+- Licensing exam overview: what the Nursing Council Licensing Examination covers.
+- Guides for every stage.
+
+For the General Public
+- Search the full registry by CNIC number for nurses, LHVs, midwives, community
+  midwives and FWW.
+- Verify a professional: the register shows who is currently licensed to practise as a
+  nurse, midwife or LHV in Pakistan.
+- File a complaint about a registered professional, an institute or an application.
+
+Registry statistics shown at capture time
+- Regulated professionals nationwide: 201,767
+  Registered Nurses: 123,317 (61%)
+  Midwives: 22,059 (11%)
+  Nursing Assistants (CNA/LPN): 4,267 (2%)
+  Lady Health Visitors: 31,715 (16%)
+  Community Midwives: 16,086 (8%)
+  Family Welfare Workers: 4,323 (2%)
+- PNMC regulates six categories of nursing professional across every province and the
+  Islamabad Capital Territory.
+
+Office contact shown on the page
+PNMC Building, PM National Health Complex, NIH, Chak Shehzad, Islamabad (45500)
++92 51 9255805
+Email: info@pnmc.gov.pk (address as published on the portal)
+Office hours: Mon–Thu 09:00–15:00, Fri 09:00–12:30
+Copyright: 2022-2026 Pakistan Nursing & Midwifery Council.
+
+Regulatory distinction (recorded by MAHSUDo-guide, not a quote):
+PNMC recognition/registration is not the same as KMU affiliation, and neither is the
+same as HEC degree recognition. Students should check each body separately.
