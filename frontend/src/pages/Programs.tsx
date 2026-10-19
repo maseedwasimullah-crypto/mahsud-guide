@@ -75,7 +75,7 @@ export default function Programs() {
                 <Badge status={p.verification_status} />
               </div>
               <p className="mt-1 text-sm text-slate-500">
-                {p.degree_level} • {p.department ?? '—'} • {p.duration ?? '—'}
+                {p.degree_level} • {p.discipline ?? '—'} • {p.duration_years != null ? `${p.duration_years} yr` : '—'}
               </p>
               <div className="mt-2 text-sm">
                 <SourceLink url={p.source_url} title={null} />

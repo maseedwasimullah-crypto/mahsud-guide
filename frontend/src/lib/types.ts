@@ -27,10 +27,13 @@ export interface DocumentOut {
 export interface ProgramOut {
   id: number
   title: string
+  short_name: string | null
   degree_level: string | null
-  duration: string | null
-  department: string | null
-  institution: string | null
+  discipline: string | null
+  duration_years: number | null
+  description: string | null
+  source_url: string | null
+  verification_status: string
 }
 
 export interface ProgramListResponse {

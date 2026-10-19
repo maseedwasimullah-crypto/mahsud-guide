@@ -159,7 +159,7 @@ export const api = {
     localStorage.removeItem('mahsud_role')
     localStorage.removeItem('mahsud_email')
   },
-  authHeaders: () => {
+  authHeaders: (): Record<string, string> => {
     const token = localStorage.getItem('mahsud_token')
     return token ? { Authorization: `Bearer ${token}` } : {}
   },

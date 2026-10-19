@@ -73,7 +73,7 @@ export default function Calculator() {
       const res = await api.calculate(selected, payload)
       setAggregate(res)
       // also run eligibility if we have basic inputs
-      await runEligibility(f, payload)
+      await runEligibility(payload)
     } catch (err) {
       if (err instanceof Error) setError(err.message)
       else setError('Calculation failed')
@@ -82,7 +82,7 @@ export default function Calculator() {
     }
   }
 
-  const runEligibility = async (f: FormulaOut, vals: Record<string, any>) => {
+  const runEligibility = async (vals: Record<string, any>) => {
     setEligError('')
     setEligLoading(true)
     try {

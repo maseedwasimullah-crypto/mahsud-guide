@@ -158,3 +158,22 @@ def _include_routers() -> None:
 
 
 _include_routers()
+
+
+def _mount_frontend() -> None:
+    """Serve the built React app from the API process when dist/ exists.
+
+    Registered after all /api routes so the catch-all never shadows the API.
+    """
+    from pathlib import Path
+
+    from fastapi.staticfiles import StaticFiles
+
+    dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+    if not (dist / "index.html").exists():
+        return
+    app.mount("/", StaticFiles(directory=dist, html=True), name="frontend")
+    logger.info("serving frontend build from %s", dist)
+
+
+_mount_frontend()
