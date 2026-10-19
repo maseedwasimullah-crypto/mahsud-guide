@@ -138,16 +138,36 @@ first run if the database is empty.
 
 ### Deploying to Streamlit Community Cloud
 
-1. Fork/push this repository to GitHub.
-2. Go to <https://share.streamlit.io>, sign in with GitHub, pick this repo,
-   set the main file path to `streamlit_app.py`.
-3. Streamlit Cloud installs `requirements.txt` from the repo root
-   automatically; no other configuration is needed.
+1. Push this repository to GitHub.
+2. Go to <https://share.streamlit.io> and sign in with GitHub.
+3. Click **Create app** → **Deploy a public app from GitHub**, then set:
+   - **Repository**: your repo (e.g. `maseedwasimullah-crypto/mahsud-guide`)
+   - **Branch**: `master`
+   - **Main file path**: `streamlit_app.py`
+4. Open **Advanced settings → Secrets** and paste the keys you need, for example:
 
-The app runs in extractive mode (`LLM_PROVIDER=none` by default). To enable
-model-written answers, add `LLM_PROVIDER=gemini` and `GEMINI_API_KEY` (or any
-other provider/key pair from the table above) in the Streamlit Cloud
-secrets/environment settings.
+   ```toml
+   SECRET_KEY = "<long random string>"
+   LLM_PROVIDER = "gemini"
+   GEMINI_API_KEY = "<your-key>"
+   ```
+
+   `.streamlit/secrets.toml.example` lists every supported key. The app bridges
+   these secrets into the backend settings at startup (`streamlit_app.py`), so no
+   code changes are required. Secrets are provided by Streamlit at runtime and
+   are never written to the repository (`.streamlit/secrets.toml` is git-ignored).
+5. Click **Deploy**. Streamlit Cloud installs `requirements.txt` from the repo
+   root automatically.
+
+Notes:
+
+- Without an `LLM_PROVIDER`/key the app still runs in extractive mode (grounded
+  answers from `data/raw/`), so a missing key is not fatal.
+- The knowledge base is bootstrapped from the committed `data/raw/` archive on
+  first run; the SQLite database lives on the app's ephemeral filesystem, so
+  chat history resets when the app is rebuilt or restarted. Use an external
+  database (`DATABASE_URL`) if persistence is required.
+- Set `SECRET_KEY` in Secrets so login tokens are stable across restarts.
 
 ## Testing
 

@@ -9,6 +9,7 @@ answers, citations and follow-up behaviour match the web app exactly.
 
 from __future__ import annotations
 
+import os
 import sys
 import time
 from pathlib import Path
@@ -19,19 +20,60 @@ BACKEND_DIR = Path(__file__).resolve().parent / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from sqlalchemy import func, select  # noqa: E402
-
-from app.db import SessionLocal, init_db  # noqa: E402
-from app.models import Chunk, Document  # noqa: E402
-from app.services.agent import answer_question  # noqa: E402
-from app.utils.time import format_pakistan, pakistan_now  # noqa: E402
-
 st.set_page_config(
     page_title="MAHSUDo-guide Assistant",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Settings are read from environment variables, but Streamlit Cloud supplies
+# configuration through st.secrets. Bridge the known keys before importing the
+# backend so that pydantic Settings picks them up. Secrets never appear in code.
+_SECRET_ENV_KEYS = (
+    "DATABASE_URL",
+    "SECRET_KEY",
+    "ADMIN_SEED_EMAIL",
+    "ADMIN_SEED_PASSWORD",
+    "ALLOWED_ORIGINS",
+    "LLM_PROVIDER",
+    "LLM_MODEL",
+    "LLM_API_KEY",
+    "LLM_BASE_URL",
+    "LLM_TEMPERATURE",
+    "LLM_TIMEOUT_SECONDS",
+    "GEMINI_API_KEY",
+    "GROQ_API_KEY",
+    "OPENROUTER_API_KEY",
+    "OPENAI_API_KEY",
+    "OPENAI_BASE_URL",
+    "OLLAMA_BASE_URL",
+    "EMBEDDING_PROVIDER",
+    "EMBEDDING_MODEL",
+)
+
+
+def _bridge_streamlit_secrets() -> None:
+    try:
+        secrets = st.secrets
+    except Exception:  # no secrets file present (e.g. local development)
+        return
+    for key in _SECRET_ENV_KEYS:
+        try:
+            if key not in os.environ and key in secrets:
+                os.environ[key] = str(secrets[key])
+        except Exception:  # noqa: BLE001 - a single bad key must not break startup
+            continue
+
+
+_bridge_streamlit_secrets()
+
+from sqlalchemy import func, select  # noqa: E402
+
+from app.db import SessionLocal, init_db  # noqa: E402
+from app.models import Chunk, Document  # noqa: E402
+from app.services.agent import answer_question  # noqa: E402
+from app.utils.time import format_pakistan, pakistan_now  # noqa: E402
 
 PROGRAMS = [
     "",
