@@ -186,6 +186,7 @@ export interface ChatResponse {
   disclaimers: string[]
   generated_by: string
   provider_configured: boolean
+  provider_error?: string | null
   blocked_prompt_injection: string[]
 }
 

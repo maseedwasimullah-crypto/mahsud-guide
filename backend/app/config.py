@@ -31,10 +31,23 @@ class Settings(BaseSettings):
     admin_seed_password: str = "change-me-in-production"
 
     # AI providers. "none" keeps the app usable with retrieval-grounded answers only.
-    llm_provider: str = "none"  # none | openai | ollama
-    llm_model: str = "gpt-4o-mini"
+    # Supported: none | openai | gemini | groq | openrouter | openai_compatible | ollama
+    # A blank llm_model selects the provider default (see services/llm.py).
+    llm_provider: str = "none"
+    llm_model: str = ""
+    llm_api_key: str = ""  # generic key; takes precedence over provider-specific keys
+    llm_base_url: str = ""  # optional override; required for openai_compatible
+    llm_temperature: float = 0.1
+    llm_timeout_seconds: float = 90.0
+
+    # OpenAI-compatible hosted providers (official endpoints).
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
+    gemini_api_key: str = ""
+    groq_api_key: str = ""
+    openrouter_api_key: str = ""
+
+    # Local inference (hosted providers are recommended on low-memory machines).
     ollama_base_url: str = "http://localhost:11434"
 
     embedding_provider: str = "local"  # local | openai

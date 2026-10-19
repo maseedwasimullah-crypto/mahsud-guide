@@ -268,6 +268,7 @@ class ChatResponse(BaseModel):
     disclaimers: list[str]
     generated_by: str
     provider_configured: bool
+    provider_error: str | None = None
     blocked_prompt_injection: list[str]
 
 
@@ -325,6 +326,9 @@ class HealthResponse(BaseModel):
     database: str
     llm_provider: str
     llm_configured: bool
+    llm_model: str = ""
+    llm_base_url: str = ""
+    llm_detail: str = ""
     embedding_provider: str
     counts: dict
 

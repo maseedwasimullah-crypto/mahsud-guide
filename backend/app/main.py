@@ -141,6 +141,8 @@ def health() -> dict:
         "database": db_status,
         "llm_provider": status.provider,
         "llm_configured": status.configured,
+        "llm_model": status.model,
+        "llm_base_url": status.base_url,
         "llm_detail": status.detail,
         "embedding_provider": settings.embedding_provider,
         "counts": counts,

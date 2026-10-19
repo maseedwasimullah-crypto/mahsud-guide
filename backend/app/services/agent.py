@@ -73,6 +73,7 @@ class AgentAnswer:
     disclaimers: list[str] = field(default_factory=list)
     generated_by: str = "extractive"
     provider_configured: bool = False
+    provider_error: str | None = None
     blocked_prompt_injection: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict:
@@ -86,6 +87,7 @@ class AgentAnswer:
             "disclaimers": self.disclaimers,
             "generated_by": self.generated_by,
             "provider_configured": self.provider_configured,
+            "provider_error": self.provider_error,
             "blocked_prompt_injection": self.blocked_prompt_injection,
         }
 
@@ -310,13 +312,12 @@ def answer_question(
         )
 
     # --- Compose the answer ----------------------------------------------
-    answer_text, generated_by = _compose(
+    answer_text, generated_by, provider_error = _compose(
         message=message,
         intent=intent,
         deterministic_sections=deterministic_sections,
         evidence_payload=evidence_payload,
         missing=missing,
-        status_configured=status.configured,
         history=history or [],
     )
 
@@ -328,6 +329,11 @@ def answer_question(
         disclaimers.append(
             "No generative AI provider is configured, so this answer was assembled directly from "
             "retrieved official documents."
+        )
+    elif provider_error:
+        disclaimers.append(
+            "The configured AI provider could not be reached, so this answer was assembled directly "
+            f"from retrieved official documents. Provider detail: {provider_error[:200]}"
         )
     if not evidence_payload and not deterministic_sections:
         missing.append(
@@ -344,6 +350,7 @@ def answer_question(
         disclaimers=disclaimers,
         generated_by=generated_by,
         provider_configured=status.configured,
+        provider_error=provider_error,
         blocked_prompt_injection=sorted(set(blocked))[:10],
     )
 
@@ -370,15 +377,15 @@ def _compose(
     deterministic_sections: list[str],
     evidence_payload: list[dict],
     missing: list[str],
-    status_configured: bool,
     history: list[dict],
-) -> tuple[str, str]:
+) -> tuple[str, str, str | None]:
     now = pakistan_now()
     time_context = (
         f"Current date/time in Peshawar, Pakistan (Asia/Karachi): "
         f"{now.strftime('%A, %d %B %Y %H:%M:%S')} (offset {now.strftime('%z')}). "
         f"Today = {pakistan_today()}."
     )
+    llm = get_llm()
 
     if not evidence_payload and not deterministic_sections:
         reply = (
@@ -388,25 +395,23 @@ def _compose(
             "(091-9217703, helpdesk@kmu.edu.pk). If you share the exact program and session, "
             "I can search again."
         )
-        if status_configured:
+        if llm is not None:
             # Let the LLM acknowledge the gap in natural language with time awareness.
-            llm = get_llm()
-            if llm is not None:
-                history_text = _format_history(history)
-                prompt = (
-                    f"{time_context}\n\n"
-                    f"{history_text}"
-                    f"Student question: {message}\n\n"
-                    "No official evidence was retrieved. Politely explain that this could not be "
-                    "verified from the knowledge base and direct the student to the official source. "
-                    "Do not guess."
-                )
-                generated = llm.generate(SYSTEM_PROMPT, prompt)
-                if generated:
-                    return generated, f"llm:{llm.provider}"
-        return reply, "extractive"
+            history_text = _format_history(history)
+            prompt = (
+                f"{time_context}\n\n"
+                f"{history_text}"
+                f"Student question: {message}\n\n"
+                "No official evidence was retrieved. Politely explain that this could not be "
+                "verified from the knowledge base and direct the student to the official source. "
+                "Do not guess."
+            )
+            generated = llm.generate(SYSTEM_PROMPT, prompt)
+            if generated:
+                return generated, f"llm:{llm.provider}", None
+            return reply, "extractive", llm.last_error
+        return reply, "extractive", None
 
-    llm = get_llm()
     if llm is not None:
         fenced = "\n\n".join(
             fence(
@@ -429,7 +434,10 @@ def _compose(
             body = generated
             if missing:
                 body += "\n\nInformation that could not be verified: " + "; ".join(missing)
-            return body, f"llm:{llm.provider}"
+            return body, f"llm:{llm.provider}", None
+        provider_error = llm.last_error
+    else:
+        provider_error = None
 
     # Extractive fallback: summarize the evidence without inventing anything.
     parts: list[str] = []
@@ -461,7 +469,7 @@ def _compose(
         "policies": "Here is what the official policy documents say.",
         "general": "Here is what the official sources in the knowledge base say.",
     }.get(intent, "")
-    return (intro + "\n\n" + "\n\n".join(parts)).strip(), "extractive"
+    return (intro + "\n\n" + "\n\n".join(parts)).strip(), "extractive", provider_error
 
 
 def knowledge_base_overview(db: Session) -> dict:

@@ -29,6 +29,7 @@ interface LocalMessage {
   missing_information?: string[] | null
   generated_by?: string | null
   provider_configured?: boolean | null
+  provider_error?: string | null
   intent?: string | null
   pending?: boolean
   error?: string
@@ -168,6 +169,7 @@ export default function Assistant() {
                 missing_information: res.missing_information,
                 generated_by: res.generated_by,
                 provider_configured: res.provider_configured,
+                provider_error: res.provider_error ?? null,
                 intent: res.intent,
               }
             : m,
@@ -418,6 +420,12 @@ export default function Assistant() {
                               </ul>
                             </Disclaimer>
                           </div>
+                        )}
+
+                        {m.provider_error && (
+                          <p className="mt-2 text-[11px] text-amber-700">
+                            Provider issue: {m.provider_error}
+                          </p>
                         )}
 
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">

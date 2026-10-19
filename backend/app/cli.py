@@ -9,6 +9,7 @@ Run from the ``backend`` directory:
     python -m app.cli refresh
     python -m app.cli create-admin --email you@example.com
     python -m app.cli bootstrap       # initdb + seed + ingest (skips failures)
+    python -m app.cli llm-check       # verify the configured AI provider with a tiny live call
 """
 
 from __future__ import annotations
@@ -384,7 +385,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="MAHSUDo-guide backend CLI")
     parser.add_argument(
         "command",
-        choices=["initdb", "seed", "ingest", "bootstrap", "refresh", "create-admin", "status"],
+        choices=[
+            "initdb",
+            "seed",
+            "ingest",
+            "bootstrap",
+            "refresh",
+            "create-admin",
+            "status",
+            "llm-check",
+        ],
     )
     parser.add_argument("--offline", action="store_true", help="use archived HTML copies where available")
     parser.add_argument("--email", default=settings.admin_seed_email)
@@ -418,6 +428,23 @@ def main(argv: list[str] | None = None) -> int:
             from .services.agent import knowledge_base_overview
 
             _log(f"knowledge base: {knowledge_base_overview(db)}")
+        elif args.command == "llm-check":
+            from .services.llm import get_llm, llm_status
+
+            status = llm_status()
+            _log(
+                f"provider={status.provider} configured={status.configured} "
+                f"model={status.model or '(none)'} base_url={status.base_url or '(none)'}"
+            )
+            _log(status.detail)
+            client = get_llm()
+            if client is None:
+                _log("No provider configured; set LLM_PROVIDER and the matching API key.")
+                return 1
+            ok, message = client.check()
+            _log(("OK: " if ok else "FAILED: ") + message)
+            if not ok:
+                return 1
     finally:
         db.close()
     return 0

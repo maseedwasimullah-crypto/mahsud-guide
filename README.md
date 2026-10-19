@@ -13,7 +13,7 @@ backend/
     utils/time.py   Asia/Karachi clock helpers (never hardcoded dates)
     models.py       Conversation, ConversationMessage, Document, Chunk, User, ...
   alembic/          migrations (conversations + conversation_messages)
-  tests/            pytest suite (51 tests)
+  tests/            pytest suite (63 tests)
 frontend/
   src/pages/Assistant.tsx   chat UI: sidebar, message bubbles, citations
   src/components/Clock.tsx  live Peshawar clock, synced to /api/time
@@ -50,9 +50,58 @@ frontend/
   historical documents.
 - With `LLM_PROVIDER=none` (default), answers are extractive (assembled from
   retrieved excerpts, `generated_by=extractive`) and the UI discloses that no
-  generative provider is configured. Set `LLM_PROVIDER=openai` +
-  `OPENAI_API_KEY` to enable model-written answers that still require
-  retrieved evidence.
+  generative provider is configured.
+- When a provider *is* configured but cannot be reached (bad key, quota,
+  network), the answer falls back to extractive text and states the reason in
+  the disclaimers and in the `provider_error` field — it never silently
+  pretends a model answered. Secrets are redacted from those messages.
+
+## Choosing an AI provider
+
+Model-written answers require a provider; every hosted option below uses the
+same OpenAI-compatible Chat Completions protocol, so no code changes are needed.
+
+| `LLM_PROVIDER`     | Endpoint (official)                                        | Default model                          | Key variable        |
+| ------------------ | ---------------------------------------------------------- | -------------------------------------- | ------------------- |
+| `gemini`           | `https://generativelanguage.googleapis.com/v1beta/openai`  | `gemini-2.5-flash`                     | `GEMINI_API_KEY`    |
+| `groq`             | `https://api.groq.com/openai/v1`                           | `openai/gpt-oss-20b`                   | `GROQ_API_KEY`      |
+| `openrouter`       | `https://openrouter.ai/api/v1`                             | `meta-llama/llama-3.2-3b-instruct:free`| `OPENROUTER_API_KEY`|
+| `openai`           | `https://api.openai.com/v1` (or `LLM_BASE_URL`)            | `gpt-4o-mini`                          | `OPENAI_API_KEY`    |
+| `openai_compatible`| your `LLM_BASE_URL`                                        | your `LLM_MODEL`                       | `LLM_API_KEY`       |
+| `ollama`           | `OLLAMA_BASE_URL` (local)                                  | your `LLM_MODEL`                       | n/a                 |
+
+Recommendation for this project: start with **Google Gemini** (Gemini offers a
+free tier and an OpenAI-compatible endpoint; see
+<https://ai.google.dev/gemini-api/docs/openai>), or **Groq** for low latency.
+**Local Ollama is only practical with roughly 8 GB+ RAM and a GPU** — the
+reference deployment here has ~4 GB RAM, so hosted providers are recommended.
+
+To enable a provider:
+
+```
+# backend/.env
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your-key
+# LLM_MODEL=            # optional: omit to use the default model
+```
+
+Then verify credentials with a tiny live call (exit code 0 = connected):
+
+```
+cd backend && python -m app.cli llm-check
+```
+
+Notes and caveats (verify against each provider's current terms before relying
+on them):
+
+- Free tiers exist but have per-minute/per-day request and token limits, and
+  limits change over time. Check the provider's official pricing/rate-limit page.
+- Some free tiers (for example Google's free tier for Gemini) may use submitted
+  content to improve products. Review the provider's data-use policy and do not
+  send sensitive data.
+- `LLM_API_KEY` is a generic variable that overrides the provider-specific key.
+- Set `LLM_TEMPERATURE` (default `0.1`) and `LLM_TIMEOUT_SECONDS` (default `90`)
+  if you need to tune generation.
 
 ## Running
 
@@ -96,13 +145,14 @@ first run if the database is empty.
    automatically; no other configuration is needed.
 
 The app runs in extractive mode (`LLM_PROVIDER=none` by default). To enable
-model-written answers, add `LLM_PROVIDER=openai` and `OPENAI_API_KEY` in the
-Streamlit Cloud secrets/environment settings.
+model-written answers, add `LLM_PROVIDER=gemini` and `GEMINI_API_KEY` (or any
+other provider/key pair from the table above) in the Streamlit Cloud
+secrets/environment settings.
 
 ## Testing
 
 ```
-cd backend && python -m pytest -q     # 51 tests: API, retrieval, timezone, conversations
+cd backend && python -m pytest -q     # 63 tests: API, retrieval, timezone, conversations, LLM providers
 cd frontend && npx tsc --noEmit       # typecheck
 cd frontend && npx oxlint            # lint
 ```
@@ -115,5 +165,6 @@ follow-up retrieval, cascade delete, and the no-provider extractive path.
 ## Configuration
 
 `.env.example` lists all variables. Sensitive values (SECRET_KEY,
-OPENAI_API_KEY, ADMIN_EMAIL, ADMIN_PASSWORD) stay in environment variables
-only and are never committed.
+GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY / OPENAI_API_KEY / LLM_API_KEY,
+ADMIN_EMAIL, ADMIN_PASSWORD) stay in environment variables only and are never
+committed. Provider error messages returned to the client are redacted.
