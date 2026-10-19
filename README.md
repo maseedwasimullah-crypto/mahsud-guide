@@ -169,6 +169,31 @@ Notes:
   database (`DATABASE_URL`) if persistence is required.
 - Set `SECRET_KEY` in Secrets so login tokens are stable across restarts.
 
+### Deploying with Docker or Render
+
+The repo includes a `Dockerfile` (single container running the Streamlit app)
+and a `render.yaml` Blueprint:
+
+```
+# Local container
+docker build -t mahsud-guide .
+docker run -p 8501:8501 \
+  -e LLM_PROVIDER=gemini -e GEMINI_API_KEY=your-key \
+  mahsud-guide
+```
+
+Render (one click / CLI):
+
+1. Push this repo to GitHub.
+2. In the Render dashboard: **New → Blueprint**, pick this repo, and Render
+   reads `render.yaml`. It generates `SECRET_KEY` automatically and prompts for
+   the provider key.
+3. Or via CLI: `pip install render-cli && render login && render blueprint launch`.
+
+The service serves on port `8501` and exposes Streamlit's health endpoint at
+`/_stcore/health`. Leave `LLM_PROVIDER=none` for extractive answers or set a
+provider + key for model-written answers.
+
 ## Testing
 
 ```

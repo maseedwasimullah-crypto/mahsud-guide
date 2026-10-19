@@ -1,0 +1,36 @@
+# Version control / CI
+.git
+.github
+.gitignore
+
+# Python
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+
+# Secrets and local config
+.env
+.env.*
+.streamlit/secrets.toml
+
+# Databases and generated artefacts
+*.db
+*.sqlite
+*.sqlite3
+backend/mahsud.db
+data/uploads
+data/ingested
+*.log
+logs
+
+# Frontend build output (the container serves the Streamlit app, not the SPA)
+node_modules
+frontend/node_modules
+frontend/dist
+frontend/.vite

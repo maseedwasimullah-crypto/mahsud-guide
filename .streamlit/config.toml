@@ -1,0 +1,6 @@
+# Streamlit runtime configuration (non-secret). Committed on purpose.
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false

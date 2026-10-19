@@ -1,0 +1,29 @@
+# Render Blueprint — deploys the Streamlit assistant as a single web service.
+#
+# Usage:
+#   1. Push this file to GitHub (already done).
+#   2. Render dashboard -> New -> Blueprint -> connect this repo.
+#   3. Render generates SECRET_KEY automatically; set the AI provider key when
+#      prompted (or leave LLM_PROVIDER as "none" for extractive mode).
+#
+# CLI alternative (after `pip install render-cli` and `render login`):
+#   render blueprint launch
+services:
+  - type: web
+    name: mahsud-guide
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: LLM_PROVIDER
+        value: none
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
