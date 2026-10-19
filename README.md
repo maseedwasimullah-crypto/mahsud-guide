@@ -73,6 +73,32 @@ npm install
 npm run dev
 ```
 
+## Streamlit interface
+
+`streamlit_app.py` (repo root) exposes the same conversational assistant as a
+Streamlit app — same retrieval, citations, follow-up context and Peshawar
+clock, reusing the backend services directly (no API server required):
+
+```
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+It bootstraps the database and seeds the knowledge base from `data/raw/` on
+first run if the database is empty.
+
+### Deploying to Streamlit Community Cloud
+
+1. Fork/push this repository to GitHub.
+2. Go to <https://share.streamlit.io>, sign in with GitHub, pick this repo,
+   set the main file path to `streamlit_app.py`.
+3. Streamlit Cloud installs `requirements.txt` from the repo root
+   automatically; no other configuration is needed.
+
+The app runs in extractive mode (`LLM_PROVIDER=none` by default). To enable
+model-written answers, add `LLM_PROVIDER=openai` and `OPENAI_API_KEY` in the
+Streamlit Cloud secrets/environment settings.
+
 ## Testing
 
 ```
