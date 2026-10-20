@@ -113,7 +113,9 @@ def bootstrap() -> dict:
             try:
                 sources = seed_sources(db)
                 seed_admissions(db, sources)
-                ingest_pages(db, sources, sources)
+                # Community Cloud should start from committed source archives and
+                # must not block app startup on a series of live web requests.
+                ingest_pages(db, sources, sources, offline=True)
                 seed_institutions_and_programs(db, sources, offline=True)
                 if settings.admin_seed_password != "change-me-in-production":
                     create_admin(db, settings.admin_seed_email, settings.admin_seed_password)
@@ -166,8 +168,6 @@ def main() -> None:
 
     if "st_messages" not in st.session_state:
         st.session_state.st_messages = []
-    if "st_program" not in st.session_state:
-        st.session_state.st_program = ""
 
     with st.sidebar:
         st.title("🎓 MAHSUDo-guide")
@@ -177,11 +177,6 @@ def main() -> None:
             f"**🕒 Peshawar time**  \n{now:%A, %d %B %Y}  \n{now:%I:%M:%S %p} (Asia/Karachi)"
         )
         st.divider()
-        st.session_state.st_program = st.selectbox(
-            "Focus program (optional)",
-            PROGRAMS,
-            index=PROGRAMS.index(st.session_state.st_program) if st.session_state.st_program else 0,
-        )
         if st.button("🆕 New chat", use_container_width=True):
             st.session_state.st_messages = []
             st.rerun()
@@ -225,7 +220,7 @@ def main() -> None:
         with st.chat_message("assistant", avatar="🎓"):
             with st.spinner("Searching official documents…"):
                 started = time.perf_counter()
-                result = ask(user_input, history, st.session_state.st_program)
+                result = ask(user_input, history, None)
                 elapsed_ms = int((time.perf_counter() - started) * 1000)
 
             st.markdown(result["answer"])
